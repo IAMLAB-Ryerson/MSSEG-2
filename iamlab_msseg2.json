@@ -1,12 +1,12 @@
 {
-    "name": "MSSEG2",
+    "name": "IAMLAB MSSEG2",
     "description": "Detect new MS lesions from two FLAIR images.",
     "author": "Adam Gibicar, Samir Mitha, April Khademi",
-    "tool-version": "v1.0.0",
+    "tool-version": "1.0.0",
     "schema-version": "0.5",
     "command-line": "python test_cli.py -t1 [FLAIR1] -t2 [FLAIR2] -o [SEGMENTATION]",
     "container-image": {
-        "image": "samirmitha/msseg2:v1.0.0",
+        "image": "samirmitha/iamlab_msseg2:1.0.0",
         "index": "hub.docker.com",
         "type": "docker"
     },
