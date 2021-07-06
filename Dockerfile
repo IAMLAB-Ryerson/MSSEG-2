@@ -14,11 +14,10 @@ RUN mkdir /root/.anima/
 
 COPY config.txt /root/.anima
 
-WORKDIR /
-RUN mkdir /data/
+WORKDIR /scunet/
 
-RUN mkdir -p /models
-COPY requirements.txt /
-RUN pip3 install -r requirements.txt
-COPY /mount/models /models
-COPY /mount/setup /
+RUN mkdir -p /scunet/models
+COPY requirements.txt /scunet/
+RUN pip3 install -r /scunet/requirements.txt
+COPY /mount/models /scunet/models
+COPY /mount/setup /scunet/
