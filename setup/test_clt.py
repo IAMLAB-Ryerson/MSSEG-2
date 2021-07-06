@@ -145,11 +145,11 @@ def eval_prediction(vol_1, vol_2, output):
     model_5, _ = select_model({'img_shape': (*img_shape, num_channels)}, choice='scunet')
 
     # Get model names
-    model_1.load_weights('models/model_scunet_GDL_4channel_model1.hdf5')
-    model_2.load_weights('models/model_scunet_GDL_4channel_model2.hdf5')
-    model_3.load_weights('models/model_scunet_GDL_4channel_model3.hdf5')
-    model_4.load_weights('models/model_scunet_GDL_4channel_model4.hdf5')
-    model_5.load_weights('models/model_scunet_GDL_4channel_model5.hdf5')
+    model_1.load_weights('/scunet/models/model_scunet_GDL_model1.hdf5')
+    model_2.load_weights('/scunet/models/model_scunet_GDL_model2.hdf5')
+    model_3.load_weights('/scunet/models/model_scunet_GDL_model3.hdf5')
+    model_4.load_weights('/scunet/models/model_scunet_GDL_model4.hdf5')
+    model_5.load_weights('/scunet/models/model_scunet_GDL_model5.hdf5')
 
     # Evaluate test volume
     elapsed_time = 0
