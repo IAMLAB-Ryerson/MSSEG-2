@@ -117,8 +117,10 @@ def eval_prediction(vol_1, vol_2, output):
     # configure vols
     print("Running Prediction...")
 
-    vol_1 = os.path.join('preprocessed', vol_1)
-    vol_2 = os.path.join('preprocessed', vol_2)
+    basepath = os.path.dirname(vol_1)
+    preprocessed_path = os.path.join(basepath, 'preprocessed')
+    vol_1 = os.path.join(preprocessed_path, vol_1)
+    vol_2 = os.path.join(preprocessed_path, vol_2)
 
     # Defaults
     mode = 'other'
