@@ -19,7 +19,7 @@ from utils import (binarize,
 
 def preprocess(vol_1):
     patient = os.path.dirname(vol_1)
-    output = patient
+    output = os.path.join(patient, 'preprocessed')
     templateFlair = None
     intermediateFolder = args.intermediate_folder
 
@@ -65,6 +65,7 @@ def preprocess(vol_1):
 
     # Create the output directory which will contain the preprocessed files
     patientOutput = output
+    os.makedirs(patientOutput, exist_ok=True)
 
     masks = []
 
@@ -113,6 +114,12 @@ def preprocess(vol_1):
                 print('Template file ' + templateFlair + ' not found, skipping normalization.')
 
 def eval_prediction(vol_1, vol_2, output):
+    # configure vols
+    print("Running Prediction...")
+
+    vol_1 = os.path.join('preprocessed', vol_1)
+    vol_2 = os.path.join('preprocessed', vol_2)
+
     # Defaults
     mode = 'other'
     input_type = 'time1_2_attn'
@@ -133,6 +140,8 @@ def eval_prediction(vol_1, vol_2, output):
     model_5, _ = select_model({'img_shape': (*img_shape, num_channels)}, choice='scunet')
 
     # Get model names
+    print("Loading models...")
+
     model_1.load_weights('/scunet/models/model_scunet_GDL_model1.hdf5')
     model_2.load_weights('/scunet/models/model_scunet_GDL_model2.hdf5')
     model_3.load_weights('/scunet/models/model_scunet_GDL_model3.hdf5')
@@ -212,6 +221,7 @@ def eval_prediction(vol_1, vol_2, output):
 
     # 2D Image predictions
     #4 channel
+    print("Predicting Segmentation...")
     pred_1, pred_2, pred_3, pred_4, pred_5 = get_pred_4ch_agg_patches(vol_1, vol_2, vol_1_attn, vol_2_attn, model_1, model_2, model_3,
                                                                       model_4, model_5, img_size=vol_size, plane='sag')
 
@@ -244,6 +254,5 @@ if __name__ == '__main__':
     vol_1 = args.vol_1
     vol_2 = args.vol_2
     output = args.output
-    if not os.path.exists(os.path.dirname(os.path.dirname(vol_1))):
-        preprocess(vol_1)
+    preprocess(vol_1)
     eval_prediction(vol_1, vol_2, output)
