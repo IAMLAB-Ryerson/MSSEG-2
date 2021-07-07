@@ -18,8 +18,8 @@ from utils import (binarize,
                     get_pred_4ch_agg_patches)
 
 def preprocess(vol_1):
-    patients = os.path.dirname(os.path.dirname(os.path.dirname(vol_1)))
-    output = os.path.join(patients, 'preprocessed')
+    patient = os.path.dirname(vol_1)
+    output = patient
     templateFlair = None
     intermediateFolder = args.intermediate_folder
 
@@ -60,69 +60,57 @@ def preprocess(vol_1):
     #  - mask flair images with the union of the masks of both time points
     #  - bias correction
     #  - normalize (optional)
-    for patientName in os.listdir(patients):
 
-        patient = os.path.join(patients, patientName)
+    print("Preprocessing patient " + vol_1 + "...")
 
-        if not os.path.isdir(patient): continue
+    # Create the output directory which will contain the preprocessed files
+    patientOutput = output
 
-        print("Preprocessing patient " + patientName + "...")
+    masks = []
 
-        # Create the output directory which will contain the preprocessed files
-        patientOutput = os.path.join(output, patientName)
+    flairs = ['flair_time01_on_middle_space.nii.gz', 'flair_time02_on_middle_space.nii.gz']
+    groundTruths = ['ground_truth_expert1.nii.gz', 'ground_truth_expert2.nii.gz', 'ground_truth_expert3.nii.gz', 'ground_truth_expert4.nii.gz', 'ground_truth.nii.gz']
+
+    # For both time points: extract brain
+    for flairName in flairs:
         
-        os.makedirs(patientOutput, exist_ok=True)
+        flair = os.path.join(patient, flairName)
+        brain = os.path.join(patientOutput, flairName)
+        mask = os.path.join(patientOutput, flairName.replace('.nii.gz', '_mask.nii.gz'))
+
+        # Extract brain
+        call(["python", animaBrainExtraction, "-i", flair, "--mask", mask, "--brain", brain, "-f", intermediateFolder])
+
+        masks.append(mask)
+
+    maskUnion = os.path.join(patientOutput, 'brain_mask.nii.gz')
+
+    # Compute the union of the masks of both time points
+    call([animaImageArithmetic, "-i", masks[0], "-a", masks[1], "-o", maskUnion])    # add the two masks
+    call([animaThrImage, "-i", maskUnion, "-t", "0.5", "-o", maskUnion])                  # threshold to get a binary mask
+
+    # Remove intermediate masks
+    for mask in masks:
+        os.remove(mask)
+
+    # For both time points: mask, remove bias and normalize if necessary
+    for flairName in flairs:
         
-        masks = []
+        flair = os.path.join(patient, flairName)
+        brain = os.path.join(patientOutput, flairName)
 
-        flairs = ['flair_time01_on_middle_space.nii.gz', 'flair_time02_on_middle_space.nii.gz']
-        groundTruths = ['ground_truth_expert1.nii.gz', 'ground_truth_expert2.nii.gz', 'ground_truth_expert3.nii.gz', 'ground_truth_expert4.nii.gz', 'ground_truth.nii.gz']
+        # Mask original FLAIR images with the union mask
+        call([animaMaskImage, "-i", flair, "-m", maskUnion, "-o", brain])
 
-        # For both time points: extract brain
-        for flairName in flairs:
-            
-            flair = os.path.join(patient, flairName)
-            brain = os.path.join(patientOutput, flairName)
-            mask = os.path.join(patientOutput, flairName.replace('.nii.gz', '_mask.nii.gz'))
-
-            # Extract brain
-            call(["python", animaBrainExtraction, "-i", flair, "--mask", mask, "--brain", brain, "-f", intermediateFolder])
-
-            masks.append(mask)
-
-        maskUnion = os.path.join(patientOutput, 'brain_mask.nii.gz')
-
-        # Compute the union of the masks of both time points
-        call([animaImageArithmetic, "-i", masks[0], "-a", masks[1], "-o", maskUnion])    # add the two masks
-        call([animaThrImage, "-i", maskUnion, "-t", "0.5", "-o", maskUnion])                  # threshold to get a binary mask
-
-        # Remove intermediate masks
-        for mask in masks:
-            os.remove(mask)
-
-        # For both time points: mask, remove bias and normalize if necessary
-        for flairName in flairs:
-            
-            flair = os.path.join(patient, flairName)
-            brain = os.path.join(patientOutput, flairName)
-
-            # Mask original FLAIR images with the union mask
-            call([animaMaskImage, "-i", flair, "-m", maskUnion, "-o", brain])
-
-            # Remove bias
-            call([animaN4BiasCorrection, "-i", brain, "-o", brain, "-B", "0.3"])
-            
-            if templateFlair:
-                if os.path.exists(templateFlair):
-                    # Normalize intensities with the given template
-                    call([animaNyulStandardization, "-m", brain, "-r", templateFlair, "-o", brain])
-                else:
-                    print('Template file ' + templateFlair + ' not found, skipping normalization.')
+        # Remove bias
+        call([animaN4BiasCorrection, "-i", brain, "-o", brain, "-B", "0.3"])
         
-        # Copy the ground truths to the output directory
-        for imageName in groundTruths:
-            shutil.copyfile(os.path.join(patient, imageName), os.path.join(patientOutput, imageName))
-
+        if templateFlair:
+            if os.path.exists(templateFlair):
+                # Normalize intensities with the given template
+                call([animaNyulStandardization, "-m", brain, "-r", templateFlair, "-o", brain])
+            else:
+                print('Template file ' + templateFlair + ' not found, skipping normalization.')
 
 def eval_prediction(vol_1, vol_2, output):
     # Defaults
