@@ -1,5 +1,5 @@
 {
-    "name": "IAMLAB MSSEG2",
+    "name": "IAMLAB_MSSEG2",
     "description": "Detect new MS lesions from two FLAIR images.",
     "author": "Adam Gibicar, Samir Mitha, April Khademi",
     "tool-version": "1.0.0",
